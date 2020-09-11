@@ -33,41 +33,57 @@ http.createServer(function (req, res) {
   var request_path = decodeURI(url.replace(/^\/+/, "").replace(/\?.*$/, ""));
   var file_path = path.resolve(root, request_path);
   var mime_type = mime_types[path.extname(file_path)] || "application/octet-stream";
+  if(request_path === "research")
+  {
+	  var urlParams = new URLSearchParams(url.replace(/^.*\?/, ""));
+	  var obj = JSON.parse('{"' + decodeURI(urlParams).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+	  let bdd_json = JSON.parse(fs.readFileSync('bdd.json'));
+	  var result = new Array();
+	  bdd_json.forEach(object => {
+		 Object.keys(object).forEach(val => {
+			 if(object[val] === obj[val])
+				 result.push(object);
+		 });
+	  });
+	  sendFile(res, "text/html", JSON.stringify(result));
+  }
+  else
+  {
+	  fs.stat(file_path, function(err, stat) {
+		if (stat && stat.isDirectory()) {
+		  fs.readFile(file_path + "/index.html", function(err, content) {
+			if (err) {
+			  request_path = (request_path + "/").replace(/\/+$/, "/");
+			  listDirectory(res, file_path, request_path);
+			  logResponse(method, url, 200, "Listing directory " + (request_path === "/" ? "." : request_path), "text/html");
+			} else {
+			  sendFile(res, "text/html", content);
+			  logResponse(method, url, 200, "Sending file " + path.join(request_path, "index.html"), "text/html");
+			}
+		  });
+		} else {
+		  fs.readFile(file_path, function(err, content) {
+			if (err) {
+			  fs.readFile(file_path + ".gz", function(err, content) {
+				if (err) {
+				  res.writeHead(404);
+				  res.end("File " + request_path + " not found.");
+				  logResponse(method, url, 404, "File " + request_path + " not found");
+				} else {
+				  res.setHeader("Content-Encoding", "gzip");
+				  sendFile(res, mime_type, content);
+				  logResponse(method, url, 200, "Sending file " + request_path + ".gz", mime_type + " - gzip encoded");
+				}
+			  });
+			} else {
+			  sendFile(res, mime_type, content);
+			  logResponse(method, url, 200, "Sending file " + request_path, mime_type);
+			}
+		  });
+		}
 
-  fs.stat(file_path, function(err, stat) {
-    if (stat && stat.isDirectory()) {
-      fs.readFile(file_path + "/index.html", function(err, content) {
-        if (err) {
-          request_path = (request_path + "/").replace(/\/+$/, "/");
-          listDirectory(res, file_path, request_path);
-          logResponse(method, url, 200, "Listing directory " + (request_path === "/" ? "." : request_path), "text/html");
-        } else {
-          sendFile(res, "text/html", content);
-          logResponse(method, url, 200, "Sending file " + path.join(request_path, "index.html"), "text/html");
-        }
-      });
-    } else {
-      fs.readFile(file_path, function(err, content) {
-        if (err) {
-          fs.readFile(file_path + ".gz", function(err, content) {
-            if (err) {
-              res.writeHead(404);
-              res.end("File " + request_path + " not found.");
-              logResponse(method, url, 404, "File " + request_path + " not found");
-            } else {
-              res.setHeader("Content-Encoding", "gzip");
-              sendFile(res, mime_type, content);
-              logResponse(method, url, 200, "Sending file " + request_path + ".gz", mime_type + " - gzip encoded");
-            }
-          });
-        } else {
-          sendFile(res, mime_type, content);
-          logResponse(method, url, 200, "Sending file " + request_path, mime_type);
-        }
-      });
-    }
-
-  });
+	  });
+  }
  
 
 }).listen(port, function() {
