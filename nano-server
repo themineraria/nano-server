@@ -48,7 +48,7 @@ http.createServer(function (req, res) {
 	  });
 	  res.setHeader("Content-Encoding", "gzip");
 	  zlib.gzip(JSON.stringify(result), function (_, result) {
-		sendFile(res, "text/html", result);
+		sendFile(res, "text/html; charset=utf-8", result);
 	  });
   }
   else
@@ -63,7 +63,7 @@ http.createServer(function (req, res) {
 			} else {
 			  res.setHeader("Content-Encoding", "gzip");
 			  zlib.gzip(content, function (_, result) {
-				sendFile(res, "text/html", result);
+				sendFile(res, "text/html; charset=utf-8", result);
 			  });
 			  logResponse(method, url, 200, "Sending file " + path.join(request_path, "index.html"), "text/html");
 			}
