@@ -40,12 +40,17 @@ http.createServer(function (req, res) {
 	  var obj = JSON.parse('{"' + decodeURI(urlParams).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
 	  let bdd_json = JSON.parse(fs.readFileSync('bdd.json'));
 	  var result = new Array();
-	  bdd_json.forEach(object => {
+	  bdd_json.forEach((object, key) => {
 		 Object.keys(object).forEach(val => {
 			 if(object[val] === obj[val])
+			 {
+				 object["search_nb"] += 1;
+				 bdd_json[key]["search_nb"] += 1;
 				 result.push(object);
+			 }
 		 });
 	  });
+	  fs.writeFileSync("bdd.json", JSON.stringify(bdd_json, null, 2));
 	  res.setHeader("Content-Encoding", "gzip");
 	  zlib.gzip(JSON.stringify(result), function (_, result) {
 		sendFile(res, "text/html; charset=utf-8", result);
