@@ -45,7 +45,7 @@ http.createServer(function (req, res) {
 			 if(object[val] === obj[val])
 			 {
 				 object["search_nb"] += 1;
-				 bdd_json[key]["search_nb"] += 1;
+				 //bdd_json[key]["search_nb"] += 1;
 				 result.push(object);
 			 }
 		 });
